@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/udaan/static/css/main.e6c13ad2.css",
+    "main.js": "/udaan/static/js/main.6fff71c0.js",
+    "static/js/453.62e96d7f.chunk.js": "/udaan/static/js/453.62e96d7f.chunk.js",
+    "index.html": "/udaan/index.html",
+    "main.e6c13ad2.css.map": "/udaan/static/css/main.e6c13ad2.css.map",
+    "main.6fff71c0.js.map": "/udaan/static/js/main.6fff71c0.js.map",
+    "453.62e96d7f.chunk.js.map": "/udaan/static/js/453.62e96d7f.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.6fff71c0.js"
+  ]
+}
