@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/udaan-app/static/css/main.e6c13ad2.css",
-    "main.js": "/udaan-app/static/js/main.a79a5aff.js",
+    "main.js": "/udaan-app/static/js/main.c52b8638.js",
     "static/js/453.c7efe716.chunk.js": "/udaan-app/static/js/453.c7efe716.chunk.js",
     "index.html": "/udaan-app/index.html",
     "main.e6c13ad2.css.map": "/udaan-app/static/css/main.e6c13ad2.css.map",
-    "main.a79a5aff.js.map": "/udaan-app/static/js/main.a79a5aff.js.map",
+    "main.c52b8638.js.map": "/udaan-app/static/js/main.c52b8638.js.map",
     "453.c7efe716.chunk.js.map": "/udaan-app/static/js/453.c7efe716.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.a79a5aff.js"
+    "static/js/main.c52b8638.js"
   ]
 }
