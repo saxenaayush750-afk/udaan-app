@@ -1,321 +1,315 @@
-import React, { useState } from "react";
-import { auth, db } from "./firebaseConfig";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut
-} from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import React, { useState, useEffect, useCallback } from "react";
+// Stubbed Firebase Imports (Ready for future login/auth implementation)
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-/* Utility Components from Previous Code */
+// --- Minimal Firebase Setup (Not fully initialized until needed) ---
+// Note: These global variables are required by the canvas environment.
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+// let auth = null;
+// let db = null;   
+
+// if (Object.keys(firebaseConfig).length > 0) {
+//     const firebaseApp = initializeApp(firebaseConfig);
+//     auth = getAuth(firebaseApp);
+//     db = getFirestore(firebaseApp);
+// }
+// -----------------------------------------------------------------
+
+/* --- Custom SVG Logo Component --- */
+const UDAANSVGLogo = ({ size = 80, color = "#1F78D1" }) => (
+    <svg 
+        width={size} 
+        height={size} 
+        viewBox="0 0 100 100" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ 
+            marginBottom: 10, 
+            filter: `drop-shadow(0 0 5px ${color}80)`, // Subtle shadow for depth
+        }}
+    >
+        {/* Abstract upward flight path / Swoosh */}
+        <path 
+            d="M 20 80 Q 50 20 80 80" // Quadratic Bezier curve: start(20,80) -> control(50,20) -> end(80,80)
+            stroke={color} 
+            strokeWidth="8" 
+            strokeLinecap="round"
+            fill="none"
+        />
+        {/* Goal/Star/Sun element at the peak */}
+        <circle 
+            cx="50" 
+            cy="20" 
+            r="10" 
+            fill={color}
+        />
+        {/* Small decorative inner line for dynamics */}
+        <path 
+            d="M 40 80 L 50 60 L 60 80" 
+            stroke={color} 
+            strokeWidth="3" 
+            strokeLinecap="round"
+            fill="none"
+        />
+    </svg>
+);
+
+
+/* --- 1. Splash Screen Component --- */
 function Splash({ onContinue }) {
-  React.useEffect(() => {
-    const t = setTimeout(onContinue, 1200);
-    return () => clearTimeout(t);
+  // Use useEffect to automatically navigate after 4000 milliseconds (4 seconds)
+  useEffect(() => {
+    // Set the timer for 4 seconds
+    const timer = setTimeout(onContinue, 4000); 
+    
+    // Cleanup function to clear the timer if the component unmounts
+    return () => clearTimeout(timer);
   }, [onContinue]);
+
   return (
-    <div style={styles.center}>
-      <h1 style={{fontSize:40, color:"#4b6cb7"}}>UDAAN 🚀</h1>
-      <p style={{marginTop:10}}>One Stop Career & Education Advisor</p>
-      <button style={styles.button} onClick={onContinue}>Continue</button>
+    <div style={styles.splashContainer}>
+      {/* UDAAN Logo (Using a combined div for better visual centering) */}
+      <div style={styles.logoWrapper}>
+          {/* Custom SVG Logo placed here */}
+          <UDAANSVGLogo />
+          <h1 style={styles.splashTitle}>UDAAN</h1> 
+      </div>
+      
+      {/* UPDATED SUBTITLE */}
+      <p style={styles.splashSubtitle}>Seamless Placement & Training Nexus</p>
+      
+      {/* A simple loading indicator for visual effect */}
+      <div style={styles.loadingBar}>
+        <div style={styles.loadingProgress}></div>
+      </div>
+      
+      <button style={{...styles.button, marginTop: 40, background: '#1F78D1'}} onClick={onContinue}>
+        Continue
+      </button>
     </div>
   );
 }
+
+/* --- 2. Role Selection Component (Next Screen) --- */
+
+const RoleCard = ({ role, onClick }) => {
+    // Custom style for dynamic hover effect using inline styles (for React environment)
+    const [isHovered, setIsHovered] = useState(false);
+
+    const cardStyle = {
+        ...styles.roleCard,
+        background: isHovered ? 'linear-gradient(135deg, #1F78D1, #125DB0)' : '#2C2C2C', // Gradient on hover
+        transform: isHovered ? 'translateY(-8px) scale(1.03)' : 'translateY(0)',
+        boxShadow: isHovered ? '0 15px 35px rgba(31, 120, 209, 0.4), 0 0 20px rgba(31, 120, 209, 0.2)' : '0 8px 16px rgba(0,0,0,0.5)',
+        border: isHovered ? '2px solid #1F78D1' : '2px solid #444',
+    };
+
+    return (
+        <div 
+            style={cardStyle} 
+            onClick={onClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <span style={styles.roleIcon}>{role.icon}</span>
+            <h3 style={styles.roleTitle}>{role.name}</h3>
+            <p style={styles.roleDescription}>{role.description}</p>
+        </div>
+    );
+};
 
 function RoleSelection({ go }) {
-  return (
-    <div style={styles.center}>
-      <h2>Choose Role</h2>
-      <div style={{marginTop:20}}>
-        <button style={{...styles.button, background:"#2979ff"}} onClick={() => go("studentLogin")}>Student</button>
-        <button style={{...styles.button, background:"#27ae60", marginLeft:12}} onClick={() => go("counselorLogin")}>Counselor</button>
-      </div>
-    </div>
-  );
+    // Based on the provided PDF, the three main roles are:
+    // 1. Student
+    // 2. Placement Cell (DTE) / Placement Officer
+    // 3. Industry / Recruiter
+    
+    const roles = [
+        {
+            name: "Student",
+            icon: "🎓",
+            description: "Apply for Internships/Jobs, track progress, and access resources."
+        },
+        {
+            name: "Placement Officer",
+            icon: "🏫",
+            description: "Manage companies, approve applications, and generate MIS reports."
+        },
+        {
+            name: "Recruiter/Industry",
+            icon: "💼",
+            description: "Post vacancies, shortlist candidates, and issue digital offer letters."
+        }
+    ];
+
+    return (
+        <div style={styles.roleSelectionContainer}>
+            <h2 style={{ color: "#fff", marginBottom: 15, fontSize: 32, fontWeight: 700 }}>Select Your Role</h2>
+            <p style={{ color: '#aaa', marginBottom: 40 }}>Choose the role that best defines your interaction with the UDAAN platform.</p>
+            <div style={styles.roleGrid}>
+                {roles.map(role => (
+                    <RoleCard 
+                        key={role.name} 
+                        role={role} 
+                        onClick={() => go(role.name.toLowerCase().replace(/\s|\//g, ''))} // e.g., 'student', 'placementofficer', 'recruiterindustry'
+                    />
+                ))}
+            </div>
+        </div>
+    );
 }
 
-function StudentRegister({ onBack, onLogin }) {
-  const [name,setName] = useState("");
-  const [age,setAge] = useState("");
-  const [gender,setGender] = useState("");
-  const [education,setEducation] = useState("");
-  const [email,setEmail] = useState("");
-  const [phone,setPhone] = useState("");
-  const [password,setPassword] = useState("");
-
-  const register = async () => {
-    if(!email || !password || !name){ alert("Please fill name, email & password"); return; }
-    try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "students", userCred.user.uid), {
-        name, age, gender, currentEducation: education, email, phone,
-        createdAt: serverTimestamp(), verified: false
-      });
-      alert("Registered! Please verify your email from Firebase console if needed.");
-      onBack();
-    } catch(e) {
-      alert("Register error: " + e.message);
-    }
-  };
-
-  return (
-    <div style={styles.formCard}>
-      <h3>Student Register</h3>
-      <input style={styles.input} placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} />
-      <input style={styles.input} placeholder="Age" value={age} onChange={e=>setAge(e.target.value)} />
-      <input style={styles.input} placeholder="Gender" value={gender} onChange={e=>setGender(e.target.value)} />
-      <input style={styles.input} placeholder="Current Education" value={education} onChange={e=>setEducation(e.target.value)} />
-      <input style={styles.input} placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-      <input style={styles.input} placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} />
-      <input style={styles.input} placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <div style={{display:"flex", gap:10}}>
-        <button style={styles.button} onClick={register}>Register</button>
-        <button style={styles.ghost} onClick={onBack}>Back</button>
-      </div>
-    </div>
-  );
-}
-
-function StudentLogin({ onBack, onLoginSuccess, onRegisterClick }) {
-  const [email,setEmail] = useState("");
-  const [password,setPassword] = useState("");
-
-  const login = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      onLoginSuccess();
-    } catch(e) {
-      alert("Login failed: " + e.message);
-    }
-  };
-
-  const forgot = async () => {
-    const em = prompt("Enter your registered email for reset:");
-    if(!em) return;
-    try {
-      await sendPasswordResetEmail(auth, em);
-      alert("Password reset email sent (check inbox).");
-    } catch(e) {
-      alert("Error: " + e.message);
-    }
-  };
-
-  return (
-    <div style={styles.formCard}>
-      <h3>Student Login</h3>
-      <input style={styles.input} placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-      <input style={styles.input} placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <div style={{display:"flex", gap:10}}>
-        <button style={styles.button} onClick={login}>Login</button>
-        <button style={styles.ghost} onClick={onBack}>Back</button>
-      </div>
-      <button style={{marginTop:10, background:"transparent", color:"#2b6cb0", border:"none"}} onClick={forgot}>Forgot Password?</button>
-      <button style={{marginTop:10, background:"transparent", color:"#2b6cb0", border:"none"}} onClick={onRegisterClick}>Don't have an account? Register</button>
-    </div>
-  );
-}
-
-/* Student Dashboard */
-function StudentDashboard({ onLogout }) {
-  return (
-    <div style={styles.dashboardPage}>
-      <h2 style={{color:"#4b6cb7"}}>UDAAN: Student Dashboard</h2>
-      <div style={styles.grid}>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>🧭</span>
-          <h3>Career Compass</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>👨‍🏫</span>
-          <h3>Find a Mentor</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>💬</span>
-          <h3>My Chats</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>❓</span>
-          <h3>FAQs</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>🌟</span>
-          <h3>Success Stories</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>👤</span>
-          <h3>My Profile</h3>
-        </button>
-      </div>
-      <button style={{...styles.button, marginTop:40}} onClick={onLogout}>Logout</button>
-    </div>
-  );
-}
-
-/* Counselor Register & Login */
-function CounselorRegister({ onBack, onLogin }) {
-  const [name,setName] = useState("");
-  const [email,setEmail] = useState("");
-  const [phone,setPhone] = useState("");
-  const [password,setPassword] = useState("");
-
-  const register = async () => {
-    if(!email || !password || !name){ alert("Please fill name, email & password"); return; }
-    try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "counselors", userCred.user.uid), {
-        name, email, phone, studentsHelped: 0, createdAt: serverTimestamp()
-      });
-      alert("Counselor registered!");
-      onBack();
-    } catch(e) {
-      alert("Error: " + e.message);
-    }
-  };
-
-  return (
-    <div style={styles.formCard}>
-      <h3>Counselor Register</h3>
-      <input style={styles.input} placeholder="Name" value={name} onChange={e=>setName(e.target.value)} />
-      <input style={styles.input} placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-      <input style={styles.input} placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} />
-      <input style={styles.input} placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <div style={{display:"flex", gap:10}}>
-        <button style={styles.button} onClick={register}>Register</button>
-        <button style={styles.ghost} onClick={onBack}>Back</button>
-      </div>
-    </div>
-  );
-}
-
-function CounselorLogin({ onBack, onLoginSuccess, onRegisterClick }) {
-  const [email,setEmail] = useState("");
-  const [password,setPassword] = useState("");
-  const login = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      onLoginSuccess();
-    } catch(e) { alert("Login failed: " + e.message); }
-  };
-  return (
-    <div style={styles.formCard}>
-      <h3>Counselor Login</h3>
-      <input style={styles.input} placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-      <input style={styles.input} placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <div style={{display:"flex", gap:10}}>
-        <button style={styles.button} onClick={login}>Login</button>
-        <button style={styles.ghost} onClick={onBack}>Back</button>
-      </div>
-      <button style={{marginTop:10, background:"transparent", color:"#2b6cb0", border:"none"}} onClick={onRegisterClick}>Don't have an account? Register</button>
-    </div>
-  );
-}
-
-/* NEW Counselor Dashboard */
-function CounselorDashboard({ onLogout }) {
-  return (
-    <div style={styles.dashboardPage}>
-      <h2 style={{color:"#27ae60"}}>UDAAN: Counselor Dashboard</h2>
-      <div style={styles.grid}>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>👤</span>
-          <h3>My Profile</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>🙋‍♂</span>
-          <h3>Student Requests</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>💬</span>
-          <h3>My Chats</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>📈</span>
-          <h3>Impact Tracker</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>📅</span>
-          <h3>Session Management</h3>
-        </button>
-        <button style={styles.gridItem}>
-          <span style={{fontSize:24}}>📜</span>
-          <h3>Certification</h3>
-        </button>
-      </div>
-      <button style={{...styles.button, background:"#e74c3c", marginTop:40}} onClick={onLogout}>Logout</button>
-    </div>
-  );
-}
-
-/* Main App */
-export default function App(){
+/* --- 3. Main App Component --- */
+export default function App() {
   const [screen, setScreen] = useState("splash");
-  const [userType, setUserType] = useState(null);
+  
+  const navigateTo = useCallback((page) => setScreen(page), []);
 
-  const go = (page) => setScreen(page);
-
-  const logout = async () => { await signOut(auth); setScreen("role"); setUserType(null); };
-
-  const onStudentLoginSuccess = () => { setUserType("student"); setScreen("studentDash"); };
-  const onCounselorLoginSuccess = () => { setUserType("counselor"); setScreen("counselorDash"); };
+  const renderScreen = () => {
+    switch (screen) {
+      case "splash":
+        return <Splash onContinue={() => navigateTo("roleSelection")} />;
+      case "roleSelection":
+        return <RoleSelection go={navigateTo} />;
+      default:
+        // Placeholder for future screens like 'studentlogin', 'placementofficerlogin', etc.
+        return (
+          <div style={styles.center}>
+            <h1 style={{color: '#fff'}}>Welcome to UDAAN!</h1>
+            <p style={{color: '#ccc'}}>You selected: {screen}</p>
+            <button style={styles.button} onClick={() => navigateTo("roleSelection")}>
+                Go Back to Role Selection
+            </button>
+          </div>
+        );
+    }
+  };
 
   return (
     <div style={styles.page}>
-      {screen === "splash" && <Splash onContinue={() => setScreen("role")} />}
-      {screen === "role" && <RoleSelection go={go} />}
-      {screen === "studentLogin" && (
-        <StudentLogin
-          onBack={() => setScreen("role")}
-          onLoginSuccess={onStudentLoginSuccess}
-          onRegisterClick={() => setScreen("studentRegister")}
-        />
-      )}
-      {screen === "studentRegister" && (
-        <StudentRegister
-          onBack={() => setScreen("studentLogin")}
-        />
-      )}
-      {screen === "studentDash" && <StudentDashboard onLogout={logout} />}
-      {screen === "counselorLogin" && (
-        <CounselorLogin
-          onBack={() => setScreen("role")}
-          onLoginSuccess={onCounselorLoginSuccess}
-          onRegisterClick={() => setScreen("counselorRegister")}
-        />
-      )}
-      {screen === "counselorRegister" && (
-        <CounselorRegister
-          onBack={() => setScreen("counselorLogin")}
-        />
-      )}
-      {screen === "counselorDash" && <CounselorDashboard onLogout={logout} />}
+      {renderScreen()}
     </div>
   );
 }
 
+
+/* --- 4. Styles --- */
 const styles = {
-  page: { minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f3f6ff", padding:20 },
-  dashboardPage: { display:"flex", flexDirection:"column", alignItems:"center", padding:20, background:"#fff", borderRadius:16, boxShadow:"0 6px 18px rgba(0,0,0,0.08)" },
-  center: { textAlign:"center" },
-  button: { padding:"10px 18px", background:"#4b6cb7", color:"#fff", border:"none", borderRadius:8, cursor:"pointer", marginTop:12 },
-  ghost: { padding:"10px 18px", background:"#ddd", color:"#333", border:"none", borderRadius:8, cursor:"pointer" },
-  formCard: { width:320, padding:16, borderRadius:12, background:"#fff", boxShadow:"0 6px 18px rgba(0,0,0,0.08)", display:"flex", flexDirection:"column", gap:8 },
-  input: { padding:10, borderRadius:8, border:"1px solid #ccc", marginBottom:6 },
-  grid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px", marginTop: "40px", maxWidth: "800px" },
-  gridItem: {
-    padding: "20px",
-    background: "#f0f4f8",
-    borderRadius: 12,
-    border: "1px solid #d4e0ee",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    textAlign: "center",
-    cursor: "pointer",
-    transition: "transform 0.2s, box-shadow 0.2s",
-    "&:hover": {
-      transform: "translateY(-5px)",
-      boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
+    page: {
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#121212", // Dark background for the whole page
+        padding: 20,
+        boxSizing: "border-box",
+        fontFamily: "'Inter', sans-serif",
     },
-  },
+    splashContainer: {
+        textAlign: "center",
+        padding: 60,
+        background: "#1E1E1E", // Dark background for the splash box
+        borderRadius: 20,
+        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+        width: 400,
+        maxWidth: '90%',
+    },
+    logoWrapper: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    splashTitle: {
+        fontSize: 48,
+        color: "#1F78D1", // Primary blue color for contrast
+        fontWeight: 800,
+        margin: "0",
+    },
+    splashSubtitle: {
+        fontSize: 18,
+        color: "#B0B0B0", // Light gray text for visibility
+        marginBottom: 30,
+    },
+    loadingBar: {
+        width: '100%',
+        height: 8,
+        backgroundColor: '#444', // Darker background for loading bar
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    loadingProgress: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#1F78D1', // Primary blue color
+        borderRadius: 4,
+        animation: 'progress-anim 4s linear forwards',
+    },
+    button: {
+        padding: "12px 25px",
+        background: "#1F78D1",
+        color: "#fff",
+        border: "none",
+        borderRadius: 10,
+        cursor: "pointer",
+        fontSize: 16,
+        fontWeight: 600,
+        transition: 'background 0.2s, transform 0.1s',
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+    },
+    center: {
+        textAlign: "center",
+        padding: 20,
+    },
+    // Role Selection Styles (Updated for enhanced design)
+    roleSelectionContainer: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: 50, // Increased padding
+        background: "#1E1E1E", // Dark background
+        borderRadius: 25, // More rounded corners
+        boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+        width: 1000, // Increased width for better layout
+        maxWidth: '95%',
+    },
+    roleGrid: {
+        display: "flex",
+        gap: 30, // Increased gap
+        flexWrap: 'wrap', 
+        justifyContent: 'center', 
+        width: '100%',
+    },
+    roleCard: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "35px 25px", // Increased padding inside card
+        background: "#2C2C2C", 
+        borderRadius: 15,
+        cursor: "pointer",
+        width: 280, // Slightly wider cards
+        minHeight: 220, // Set min height for uniformity
+        textAlign: "center",
+        border: "2px solid #444",
+        transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)", // Smooth transition
+    },
+    roleIcon: {
+        fontSize: 60, // Larger icon
+        marginBottom: 15,
+    },
+    roleTitle: {
+        fontSize: 22, // Larger title
+        fontWeight: 700,
+        color: "#fff", 
+        margin: 0,
+    },
+    roleDescription: {
+        fontSize: 15,
+        color: "#B0B0B0", 
+        marginTop: 10,
+    },
 };
