@@ -208,7 +208,7 @@ const styles = {
         boxSizing: "border-box",
         fontFamily: "'Inter', sans-serif",
     },
-<<<<<<< HEAD
+
     splashContainer: {
         textAlign: "center",
         padding: 60,
@@ -313,7 +313,5 @@ const styles = {
         color: "#B0B0B0", 
         marginTop: 10,
     },
-=======
-  },
->>>>>>> 72f31b25d3dfd3cbc095efb69ce27891a360ba94
-};
+
+  };
